@@ -21,11 +21,11 @@ require('dotenv').config();
 const app = express();
 
 // Connect Mongo DB
-require('./config/mongodb');
+require('./config/mongodb')();
 
 // view engine setup
 // React view engine setup
-app.set('views', __dirname + '/views');
+app.set('views', `${__dirname  }/views`);
 app.set('view engine', 'jsx');
 // const viewEngineOptions = { beautify: true };
 app.engine('jsx', require('express-react-views').createEngine());
@@ -49,6 +49,14 @@ app.use(
     sourceMap: true
   })
 );
+
+  // Passport
+  app.use(passport.initialize());
+  app.use(passport.session());
+
+  // Bring in defined Passport Strategy
+  require('./config/passport')(passport);
+  
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/', (req, res) => {
