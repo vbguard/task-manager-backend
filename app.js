@@ -5,7 +5,6 @@ const path = require('path');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 const sassMiddleware = require('node-sass-middleware');
-const helmet = require('helmet');
 const cors = require('cors');
 const swaggerUi = require('swagger-ui-express');
 
@@ -40,7 +39,6 @@ app.use(cookieParser());
 // Set Secure to Server
 app.disable('x-powered-by');
 app.use(cors('*'));
-app.use(helmet());
 app.use(
   sassMiddleware({
     src: path.join(__dirname, 'public'),
