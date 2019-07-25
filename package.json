@@ -7,7 +7,7 @@
 	"author": "Viktor Bulvarenko <viktor@bulvarenko.pw>",
 	"license": "MIT",
 	"engines": {
-		"node": "10.16.0"
+		"node": ">=10.10.0"
 	},
 	"scripts": {
 		"dev": "nodemon ./bin/www",
