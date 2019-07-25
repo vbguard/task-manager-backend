@@ -15,16 +15,18 @@ const router = require('./routes/routes');
 
 // add .env file see
 require('dotenv').config();
-
+require('./config/passport');
 // start App - Express
 const app = express();
+// Passport
+app.use(passport.initialize());
 
 // Connect Mongo DB
 require('./config/mongodb')();
 
 // view engine setup
 // React view engine setup
-app.set('views', `${__dirname  }/views`);
+app.set('views', `${__dirname}/views`);
 app.set('view engine', 'jsx');
 // const viewEngineOptions = { beautify: true };
 app.engine('jsx', require('express-react-views').createEngine());
@@ -40,43 +42,36 @@ app.use(cookieParser());
 app.disable('x-powered-by');
 app.use(cors('*'));
 app.use(
-  sassMiddleware({
-    src: path.join(__dirname, 'public'),
-    dest: path.join(__dirname, 'public'),
-    indentedSyntax: true, // true = .sass and false = .scss
-    sourceMap: true
-  })
+	sassMiddleware({
+		src: path.join(__dirname, 'public'),
+		dest: path.join(__dirname, 'public'),
+		indentedSyntax: true, // true = .sass and false = .scss
+		sourceMap: true
+	})
 );
 
-  // Passport
-  app.use(passport.initialize());
-  app.use(passport.session());
-
-  // Bring in defined Passport Strategy
-  require('./config/passport')(passport);
-  
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/', (req, res) => {
-  res.render('index', {name: 'John'});
+	res.render('index', {name: 'John'});
 });
 app.use('/api', router);
 app.use('/doc', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // catch 404 and forward to error handler
 app.use((req, res, next) => {
-  next(createError(404));
+	next(createError(404));
 });
 
 // error handler
 app.use((err, req, res) => {
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
+	// set locals, only providing error in development
+	res.locals.message = err.message;
+	res.locals.error = req.app.get('env') === 'development' ? err : {};
 
-  // render the error page
-  res.status(err.status || 500);
-  res.render('error');
+	// render the error page
+	res.status(err.status || 500);
+	res.render('error');
 });
 
 module.exports = app;
