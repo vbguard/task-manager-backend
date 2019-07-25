@@ -11,7 +11,7 @@ const getUser = (req, res) => {
 	if (!nickname) {
 		console.log('1');
 
-		res.status(452).json({
+		res.status(422).json({
 			success: false,
 			message: 'Field nickname empty'
 		}).end();
@@ -20,7 +20,7 @@ const getUser = (req, res) => {
   if (!password) {
 		console.log('2');
 
-		res.status(452).json({
+		res.status(422).json({
       success: false,
 			message: 'Field password empty'
 		}).end();

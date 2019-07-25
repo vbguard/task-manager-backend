@@ -11,11 +11,14 @@ const UserSchema = new Schema(
 			unique: true,
       index: true,
       minlength: 5,
-      maxlength: 15
+      maxlength: 15,
+      lowercase: true
 		},
 		password: {
       type: String,
       required: true,
+      minlength: 5,
+      maxlength: 12,
       trim: true
     },
     userTasks: [{
