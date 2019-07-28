@@ -10,7 +10,8 @@ const updateTask = (req, res) => {
 	const newFields = {
 		title: req.body.title,
 		description: req.body.description,
-		dates: req.body.dates
+    dates: req.body.dates,
+    isDone: req.body.isDone
 	};
 
 	Tasks.findOneAndUpdate({ _id: taskId }, {$set: newFields}, { new: true })
@@ -22,6 +23,21 @@ const updateTask = (req, res) => {
 		.catch(err =>
 			res.status(400).json({success: false, error: err, message: err.message})
 		);
+};
+
+const deleteTask = (req, res) => {
+  //TODO: 
+  //! delete SET and delete taskId if have - many task delete ALL
+  Sets.findOne({_id: setId}).then(async set => {
+    const deletedTasks = await Tasks.deleteMany(set.tasks);
+    const deletedSet = await Sets.deleteOne({_id: set._id});
+
+    getTasks();
+    console.log({
+      tests: deletedTasks,
+      set: deletedSet
+    });
+  })
 };
 
 const getTasks = (req, res) => {
@@ -105,5 +121,6 @@ const createTask = async (req, res) => {
 module.exports = {
 	getTasks,
 	updateTask,
-	createTask
+  createTask,
+  deleteTask
 };
