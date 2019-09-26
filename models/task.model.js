@@ -3,9 +3,9 @@ const Schema = mongoose.Schema;
 
 const TaskSchema = new Schema(
 	{
-		setId: {
+		userId: {
       type: Schema.Types.ObjectId, 
-      ref: 'Sets'
+      ref: 'Users'
     },
     title: {
       type: String,
@@ -15,16 +15,33 @@ const TaskSchema = new Schema(
       type: String,
       trim: true
     },
-    isDone: {
-      type: Boolean,
-      default: false
+    isRepeat: {
+      type: Boolean
     },
-    dates: [{ type: Date }]
+    dates: [
+      {
+        _id:false,
+        date: Date,
+        isComplete: {
+          type: Boolean,
+          default: false
+        }
+      }
+    ]
 	},
 	{
 		timestamps: true
 	}
 );
+
+TaskSchema.pre('save', function(next) {
+  const doc = this;
+  doc.isRepeat = doc.dates.length > 1;
+  next()
+}, 
+function(err) {
+  next(err);
+})
 
 TaskSchema.pre('findOneAndUpdate', function() {
   const update = this.getUpdate();

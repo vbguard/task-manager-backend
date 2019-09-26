@@ -11,9 +11,9 @@ const passportUserCheck = passport.authenticate('jwt', {
 
 router.post('/auth', userController.getUser);
 
-router.get('/tasks', passport.authenticate('jwt', { session: false }), taskController.getTasks);
-
-router.post('/task', passportUserCheck, taskController.updateTask)
-router.post('/task/create', passportUserCheck, taskController.createTask);
+router.get('/tasks', passportUserCheck, taskController.getTasks);
+router.delete('/task/:taskId', passportUserCheck, taskController.deleteTask);
+router.patch('/task/:taskId', passportUserCheck, taskController.updateTask)
+router.post('/tasks', passportUserCheck, taskController.createTask);
 
 module.exports = router;

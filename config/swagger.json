@@ -177,7 +177,7 @@
 				}
 			}
 		},
-		"/task/create": {
+		"/tasks": {
 			"post": {
 				"tags": ["Protected"],
 				"summary": "Create new task",
@@ -241,8 +241,8 @@
 				}
 			}
 		},
-		"/task": {
-			"post": {
+		"/task/{taskId}": {
+			"patch": {
 				"tags": ["Protected"],
 				"summary": "Update task",
 				"security": ["bearerAuth"],
@@ -258,7 +258,7 @@
 							"$ref": "#/components/securitySchemes/bearerAuth"
 						},
 						"style": "simple"
-					}
+          }
 				],
 				"requestBody": {
 					"content": {
@@ -430,8 +430,13 @@
 					"dates": {
 						"type": "array",
 						"items": {
-							"type": "string",
-							"format": "date-time"
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              }
 						}
 					}
 				}
@@ -446,8 +451,13 @@
 					"dates": {
 						"type": "array",
 						"items": {
-							"type": "string",
-							"format": "date-time"
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              }
 						}
 					}
 				}
