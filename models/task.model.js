@@ -20,7 +20,6 @@ const TaskSchema = new Schema(
     },
     dates: [
       {
-        _id:false,
         date: Date,
         isComplete: {
           type: Boolean,
@@ -60,6 +59,13 @@ TaskSchema.pre('findOneAndUpdate', function() {
   update.$inc = update.$inc || {};
   update.$inc.__v = 1;
 });
+
+TaskSchema.methods.getAllDatesInArray = function(data, next) {
+  const doc = this;
+  console.log(doc);
+  console.log(data);
+  next();
+};
 
 const Tasks = mongoose.model('Tasks', TaskSchema);
 
