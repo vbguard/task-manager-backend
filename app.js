@@ -24,6 +24,9 @@ app.use(passport.initialize());
 // Connect Mongo DB
 require('./config/mongodb')();
 
+// Connect PostgreSQL
+require('./config/postgress')();
+
 // view engine setup
 // React view engine setup
 app.set('views', `${__dirname}/views`);
