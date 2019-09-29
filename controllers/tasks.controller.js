@@ -270,8 +270,8 @@ const getTasksSup = async (req, res) => {
 							onNull: 0.0
 						}
 					},
-          repeatTasks: { tasks: { title: 1, isRepeat: 1 }, count: 1},
-          oneTasks: { tasks: { title: 1, isRepeat: 1 }, count: 1}
+          repeatTasks: { tasks: { title: 1, isRepeat: 1, _id: 1 }, count: 1},
+          oneTasks: { tasks: { title: 1, isRepeat: 1, _id: 1 }, count: 1}
 				}
 			}
     ]);
