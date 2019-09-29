@@ -6,23 +6,48 @@ const Tasks = require('../models/task.model');
 const Users = require('../models/user.model');
 
 const updateTask = (req, res) => {
-	const taskId = req.body._id;
-	const newFields = {
-		title: req.body.title,
-		description: req.body.description,
-		dates: req.body.dates,
-		isDone: req.body.isDone
-	};
-
-	Tasks.findOneAndUpdate({_id: taskId}, {$set: newFields}, {new: true})
-		.then(result => {
-			if (result) {
-				getTasks(req, res);
+  const taskId = req.params.taskId;
+  
+	if (req.body.isComplete) {
+		const taskDayId = req.body.taskDayId;
+		return Tasks.findOneAndUpdate(
+			{'dates._id': taskDayId},
+			//{$set: {'dates.$[element]': req.body.isComplete}},
+			//{arrayFilters: [{element: {$gte: 100}}]},
+			{$set: {'dates.$[elem].isComplete': req.body.isComplete}},
+			{
+        arrayFilters: [{'elem._id': taskDayId}],
+        new: true
 			}
-		})
-		.catch(err =>
-			res.status(400).json({success: false, error: err, message: err.message})
-		);
+		)
+			.then(result => {
+				if (result) {
+					res.json({taskId: result._id, taskDayId});
+				}
+			})
+			.catch(err => {
+				console.log(err);
+				return res
+					.status(400)
+					.json({success: false, error: err, message: err.message});
+			});
+  }
+
+  Tasks.findOneAndUpdate({_id: taskId}, {$set: {...req.body}}, {new:true}).then(result => {
+    return res.json({ status: "OK", task: result})
+  }).catch(err => res
+    .status(400)
+    .json({success: false, error: err, message: err.message}))
+
+	//	Tasks.findOneAndUpdate({_id: taskId}, {$set: newFields}, {new: true})
+	//	.then(result => {
+	//		if (result) {
+	//			getTasks(req, res);
+	//			}
+	//		})
+	//		.catch(err =>
+	//			res.status(400).json({success: false, error: err, message: err.message})
+	//		);
 };
 
 const deleteTask = (req, res) => {
@@ -142,11 +167,11 @@ const getTasks = async (req, res) => {
 							onNull: 0.0
 						}
 					},
-          repeatTasks: { tasks: { title: 1, isRepeat: 1, _id: 1 }, count: 1},
-          oneTasks: { tasks: { title: 1, isRepeat: 1, _id: 1 }, count: 1}
+					repeatTasks: {tasks: {title: 1, isRepeat: 1, _id: 1}, count: 1},
+					oneTasks: {tasks: {title: 1, isRepeat: 1, _id: 1}, count: 1}
 				}
 			}
-    ]);
+		]);
 		const userTasks = await Tasks.find(
 			{userId: userId},
 			{__v: 0, userId: 0, createdAt: 0, updatedAt: 0}
@@ -270,16 +295,16 @@ const getTasksSup = async (req, res) => {
 							onNull: 0.0
 						}
 					},
-          repeatTasks: { tasks: { title: 1, isRepeat: 1, _id: 1 }, count: 1},
-          oneTasks: { tasks: { title: 1, isRepeat: 1, _id: 1 }, count: 1}
+					repeatTasks: {tasks: {title: 1, isRepeat: 1, _id: 1}, count: 1},
+					oneTasks: {tasks: {title: 1, isRepeat: 1, _id: 1}, count: 1}
 				}
 			}
-    ]);
-    
+		]);
+
 		const userTasks = await Tasks.aggregate([
 			{$match: {userId: userId}},
-      {$unwind: '$dates'},
-      {$match: {"dates.date": { $gte: new Date() }}},
+			{$unwind: '$dates'},
+			{$match: {'dates.date': {$gte: new Date()}}},
 			{
 				$group: {
 					_id: {
@@ -297,7 +322,7 @@ const getTasksSup = async (req, res) => {
 					}
 				}
 			},
-      {$sort: {_id: 1}},
+			{$sort: {_id: 1}},
 			{
 				$project: {
 					_id: 0,
