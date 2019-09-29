@@ -61,129 +61,106 @@ const deleteTask = (req, res) => {
 
 const getTasks = async (req, res) => {
 	const userId = req.user._id;
-	// Tasks.aggregate([
-	// 	{$match: {userId: userId}},
-	// 	{$unwind: '$dates'},
-	// 	{$sort: {'dates.date': 1}},
-	// 	{$group: {_id: '$_id', dates: {$push: '$dates'}}},
-	// 	{$project: {dates: '$dates'}}
-	// ])
 
-  //========================================================
-  try {
-    
-  const calendar = await Tasks.aggregate([
-		{$match: {userId: userId}},
-		//   {
-		//   $arrayToObject: {
-		//     datesParse: { $sum: "$homework" } ,
-		//     totalQuiz: { $sum: "$quiz" }
-		//   }
-		// },
-		{$unwind: '$dates'},
-		// {
-		// 	$project: {
-		// 		_id: 0,
-		// 		// isRepeat: 1,
-		// 		dates: {
-		// 			$map: {
-		// 				input: '$dates',
-		// 				as: 'd',
-		// 				in: {
-		// 					date: '$$d.date',
-		// 					isRepeat: '$isRepeat',
-		// 					taskId: '$_id'
-		// 					// $mergeObjects: ['$$value', '$$this']}
-		// 				}
-		// 			}
-		// 		}
-		// 	}
-		// },
-		//=======================================================
-		{
-			$addFields: {
-				'dates.taskId': '$_id'
-			}
-		},
-		// Second Stage
-		{
-			$group: {
-				_id: {
-					$dateToString: {format: '%Y-%m-%d', date: '$dates.date'}
-				},
-				countRepeat: {$sum: {$cond: ['$isRepeat', 1, 0]}},
-				countOne: {$sum: {$cond: ['$isRepeat', 0, 1]}},
-				repeatTasks: { $addToSet: { taskId: {$cond: ['$isRepeat', '$_id', null]}}},
-				oneTasks: {$addToSet: {taskId: {$cond: ['$isRepeat', null, '$_id']}}}
-				// tasksRepeatIds: {
-				// 	$push: {
-				// 		$cond: ['$isRepeat', '$_id', null]
-				// 	}
-				// }
-			}
-			// averageQuantity: {$avg: '$quantity'},
-			// taskId: '$_id'
-		},
-		{
-			$project: {
-				repeatTasks: {
-					tasksIds: {
-						$map: {
-							input: '$repeatTasks',
-							as: 'task',
-							in: '$$task.taskId'
+	try {
+		const calendar = await Tasks.aggregate([
+			{$match: {userId: userId}},
+			{$unwind: '$dates'},
+			{
+				$addFields: {
+					'dates.taskId': '$_id'
+				}
+			},
+			{
+				$group: {
+					_id: {
+						$toDate: '$dates.date'
+					},
+					countRepeat: {$sum: {$cond: ['$isRepeat', 1, 0]}},
+					countOne: {$sum: {$cond: ['$isRepeat', 0, 1]}},
+					repeatTasks: {
+						$addToSet: {taskId: {$cond: ['$isRepeat', '$_id', null]}}
+					},
+					oneTasks: {$addToSet: {taskId: {$cond: ['$isRepeat', null, '$_id']}}}
+				}
+			},
+			{
+				$project: {
+					repeatTasks: {
+						tasksIds: {
+							$map: {
+								input: '$repeatTasks',
+								as: 'task',
+								in: '$$task.taskId'
+							}
+						},
+						count: '$countRepeat'
+					},
+					oneTasks: {
+						tasksIds: {
+							$map: {
+								input: '$oneTasks',
+								as: 'task',
+								in: '$$task.taskId'
+							}
+						},
+						count: '$countOne'
+					}
+				}
+			},
+			{
+				$project: {
+					repeatTasks: {$arrayElemAt: ['$repeatTasks', 0]},
+					oneTasks: {$arrayElemAt: ['$oneTasks', 0]}
+				}
+			},
+			{
+				$lookup: {
+					from: 'tasks',
+					localField: 'repeatTasks.tasksIds',
+					foreignField: '_id',
+					as: 'repeatTasks.tasksIds'
+				}
+			},
+			{
+				$lookup: {
+					from: 'tasks',
+					localField: 'oneTasks.tasksIds',
+					foreignField: '_id',
+					as: 'oneTasks.tasksIds'
+				}
+			},
+			{$sort: {_id: 1}},
+			{
+				$project: {
+					_id: 0,
+					date: {
+						$dateToString: {
+							date: '$_id',
+							format: '%d-%m-%Y',
+							timezone: '+03:00',
+							onNull: 0.0
 						}
 					},
-					count: '$countRepeat'
-        },
-        oneTasks: {
-					tasksIds: {
-						$map: {
-							input: '$oneTasks',
-							as: 'task',
-							in: '$$task.taskId'
-						}
-					},
-					count: '$countOne'
+					repeatTasks: 1,
+					oneTasks: 1
 				}
 			}
-    },
-    {
-			$project: {
-				repeatTasks: { "$arrayElemAt": [ "$repeatTasks", 0 ] } ,
-        oneTasks: { "$arrayElemAt": [ "$oneTasks", 0 ] }
-			}
-    },
-		// {
-		// 	$addFields: {
-		// 		counterRepeat: {
-		// 			count: '$countRepeat',
-		// 			tasksIds: {$push: {$tasksIds: '$_id'}}
-		// 		},
-		// 		counterOne: {count: '$countOne'}
-		// 	}
-		// },
-		// {$sort: {_id: 1}}
-		// {$group: {_id: '$_id', dates: {$push: '$dates'}}}
-		// {
-		// 	$group: {
-		// 		_id: {date: '$dates'}
-		// 	}
-		// }
-	]);
-	const userTasks = await Tasks.find({userId: userId}, {__v: 0, userId: 0, createdAt: 0, updatedAt: 0})
-    .sort({ '$dates.date': 'desc' });
+		]);
+		const userTasks = await Tasks.find(
+			{userId: userId},
+			{__v: 0, userId: 0, createdAt: 0, updatedAt: 0}
+		).sort({'$dates.date': 'desc'});
 
-    return res.status(200).json({
-      success: true,
-      tasks: userTasks,
-      calendar,
-      message: 'get user tasks and dat for calendar'
-    });
-  } catch (error) {
-    res.status(400).json({success: false, error: err, message: err.message})
-  }
-    
+		return res.status(200).json({
+			success: true,
+			tasks: userTasks,
+			calendar,
+			message: 'get user tasks and dat for calendar'
+		});
+	} catch (error) {
+		res.status(400).json({success: false, error: err, message: err.message});
+	}
 };
 
 const createTask = async (req, res) => {
@@ -211,9 +188,147 @@ const createTask = async (req, res) => {
 		);
 };
 
+const getTasksSup = async (req, res) => {
+	const userId = req.user._id;
+	try {
+		const calendar = await Tasks.aggregate([
+			{$match: {userId: userId}},
+			{$unwind: '$dates'},
+			{
+				$addFields: {
+					'dates.taskId': '$_id'
+				}
+			},
+			{
+				$group: {
+					_id: {
+						$toDate: '$dates.date'
+					},
+					countRepeat: {$sum: {$cond: ['$isRepeat', 1, 0]}},
+					countOne: {$sum: {$cond: ['$isRepeat', 0, 1]}},
+					repeatTasks: {
+						$addToSet: {taskId: {$cond: ['$isRepeat', '$_id', null]}}
+					},
+					oneTasks: {$addToSet: {taskId: {$cond: ['$isRepeat', null, '$_id']}}}
+				}
+			},
+			{
+				$project: {
+					repeatTasks: {
+						tasks: {
+							$map: {
+								input: '$repeatTasks',
+								as: 'task',
+								in: '$$task.taskId'
+							}
+						},
+						count: '$countRepeat'
+					},
+					oneTasks: {
+						tasks: {
+							$map: {
+								input: '$oneTasks',
+								as: 'task',
+								in: '$$task.taskId'
+							}
+						},
+						count: '$countOne'
+					}
+				}
+			},
+			{
+				$project: {
+					repeatTasks: {$arrayElemAt: ['$repeatTasks', 0]},
+					oneTasks: {$arrayElemAt: ['$oneTasks', 0]}
+				}
+			},
+			{
+				$lookup: {
+					from: 'tasks',
+					localField: 'repeatTasks.tasks',
+					foreignField: '_id',
+					as: 'repeatTasks.tasks'
+				}
+			},
+			{
+				$lookup: {
+					from: 'tasks',
+					localField: 'oneTasks.tasks',
+					foreignField: '_id',
+					as: 'oneTasks.tasks'
+				}
+			},
+			{$sort: {_id: 1}},
+			{
+				$project: {
+					_id: 0,
+					date: {
+						$dateToString: {
+							date: '$_id',
+							format: '%d-%m-%Y',
+							timezone: '+03:00',
+							onNull: 0.0
+						}
+					},
+          repeatTasks: { tasks: { title: 1, isRepeat: 1 }, count: 1},
+          oneTasks: { tasks: { title: 1, isRepeat: 1 }, count: 1}
+				}
+			}
+    ]);
+    
+		const userTasks = await Tasks.aggregate([
+			{$match: {userId: userId}},
+      {$unwind: '$dates'},
+      {$match: {"dates.date": { $gte: new Date() }}},
+			{
+				$group: {
+					_id: {
+						$toDate: '$dates.date'
+					},
+					dayTasks: {
+						$addToSet: {
+							idTaskDay: '$dates._id',
+							taskIsComplete: '$dates.isComplete',
+							title: '$title',
+							description: '$description',
+							dates: '$dates',
+							isRepeat: '$isRepeat'
+						}
+					}
+				}
+			},
+      {$sort: {_id: 1}},
+			{
+				$project: {
+					_id: 0,
+					date: {
+						$dateToString: {
+							date: '$_id',
+							format: '%d-%m-%Y',
+							timezone: '+03:00',
+							onNull: 0.0
+						}
+					},
+					dayTasks: 1
+				}
+			}
+		]);
+
+		return res.status(200).json({
+			success: true,
+			tasks: userTasks,
+			calendar,
+			message: 'get user tasks and dat for calendar'
+		});
+	} catch (error) {
+		res.status(400).json({success: false, error: err, message: err.message});
+	}
+};
+
 module.exports = {
 	getTasks,
 	updateTask,
 	createTask,
-	deleteTask
+	deleteTask,
+	getTasksSup
 };
