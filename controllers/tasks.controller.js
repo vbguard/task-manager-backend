@@ -87,7 +87,7 @@ const getTasks = async (req, res) => {
 			{
 				$project: {
 					repeatTasks: {
-						tasksIds: {
+						tasks: {
 							$map: {
 								input: '$repeatTasks',
 								as: 'task',
@@ -97,7 +97,7 @@ const getTasks = async (req, res) => {
 						count: '$countRepeat'
 					},
 					oneTasks: {
-						tasksIds: {
+						tasks: {
 							$map: {
 								input: '$oneTasks',
 								as: 'task',
@@ -117,17 +117,17 @@ const getTasks = async (req, res) => {
 			{
 				$lookup: {
 					from: 'tasks',
-					localField: 'repeatTasks.tasksIds',
+					localField: 'repeatTasks.tasks',
 					foreignField: '_id',
-					as: 'repeatTasks.tasksIds'
+					as: 'repeatTasks.tasks'
 				}
 			},
 			{
 				$lookup: {
 					from: 'tasks',
-					localField: 'oneTasks.tasksIds',
+					localField: 'oneTasks.tasks',
 					foreignField: '_id',
-					as: 'oneTasks.tasksIds'
+					as: 'oneTasks.tasks'
 				}
 			},
 			{$sort: {_id: 1}},
@@ -142,11 +142,11 @@ const getTasks = async (req, res) => {
 							onNull: 0.0
 						}
 					},
-					repeatTasks: 1,
-					oneTasks: 1
+          repeatTasks: { tasks: { title: 1, isRepeat: 1, _id: 1 }, count: 1},
+          oneTasks: { tasks: { title: 1, isRepeat: 1, _id: 1 }, count: 1}
 				}
 			}
-		]);
+    ]);
 		const userTasks = await Tasks.find(
 			{userId: userId},
 			{__v: 0, userId: 0, createdAt: 0, updatedAt: 0}
